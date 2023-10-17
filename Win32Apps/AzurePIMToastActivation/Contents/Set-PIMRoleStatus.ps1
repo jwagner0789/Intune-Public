@@ -1,9 +1,10 @@
 param (
-    [parameter(Mandatory = $True, Position=0)][string]$Action,    
-    [parameter(Mandatory = $True, Position=1)][string]$PrincipalId,
-    [parameter(Mandatory = $True, Position=2)][string]$RoleDefinitionId,
-    [parameter(Mandatory = $True, Position=3)][string]$DirectoryScopeId,
-    [parameter(Mandatory = $False, Position=4)][string]$RoleDisplayname
+    [parameter(Mandatory = $True, Position = 0)][string]$Action,    
+    [parameter(Mandatory = $True, Position = 1)][string]$PrincipalId,
+    [parameter(Mandatory = $True, Position = 2)][string]$RoleDefinitionId,
+    [parameter(Mandatory = $True, Position = 3)][string]$DirectoryScopeId,
+    [parameter(Mandatory = $True, Position = 4)][string]$RoleDisplayname,
+    [parameter(Mandatory = $False, Position = 5)][string]$RoleID
 )
 
 #region Constants
@@ -35,10 +36,43 @@ function logwrite
 Start-Transcript "$FolderPath\$TranscriptFile" -Append -NoClobber | Out-Null
 logwrite "START: Started $ScriptName at $ScriptTime from $ScriptPath by $($ScriptIdentity.Displayname)."
 
+logwrite "INFO: Action: $Action"
+logwrite "INFO: PrincipalId: $PrincipalId"
+logwrite "INFO: RoleDefinitionId: $RoleDefinitionId"
+logwrite "INFO: DirectoryScopeId: $DirectoryScopeId"
+logwrite "INFO: RoleDisplayname: $RoleDisplayname"
+logwrite "INFO: RoleID: $RoleID"
+
+#region Modules
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+try 
+{
+    if (!(Get-Module -ListAvailable -Name AzureADPreview))
+    {
+        logwrite "INFO: Installing AzureADPreview module."
+        Install-Module AzureADPreview -AllowClobber -Force -ErrorAction Stop | Out-Null
+        logwrite "INFO: Successfully installed AzureADPreview module."
+        Import-Module AzureADPreview -Force | Out-Null
+    }
+    else
+    {
+        logwrite "INFO: Importing AzureADPreview module."
+        Import-Module AzureADPreview -Force | Out-Null
+    }
+}
+catch
+{
+    logwrite "ERROR: Failed to install modules."
+    logwrite "ERROR: $_"
+    Stop-Transcript
+    exit 1
+}
+#endregion Modules
+
 #region Connect to Graph API
 try
 {
-    Connect-MgGraph -Scopes "RoleManagement.ReadWrite.Directory","RoleAssignmentSchedule.ReadWrite.Directory" | out-null
+    Connect-MgGraph -Scopes "RoleManagement.ReadWrite.Directory","RoleAssignmentSchedule.ReadWrite.Directory" | Out-Null
     logwrite "INFO: Successfully connected to Microsoft Graph."
 }
 catch
@@ -48,68 +82,86 @@ catch
 }
 #endregion Connect to Graph API
 
-#region Activate Roles
+#region Connect to Azure AD
 try
 {
-    if ($RoleDisplayname)
-    {
-        logwrite "INFO: Activating RoleDisplayName: $RoleDisplayname."
-    }
-    else 
-    {
-        logwrite "INFO: Activating RoleDefinitionId:$RoleDefinitionId"
-    }
-
-    $params = @{
-        action = $Action
-        justification = "Scheduled Task Assignment"
-        roleDefinitionId = $RoleDefinitionId
-        directoryScopeId = $DirectoryScopeId
-        principalId = $PrincipalId
-        scheduleInfo = @{
-            startDateTime = Get-Date
-            expiration  = @{
-                Type = "AfterDuration"
-                Duration = "PT8H"
-            }
-        }
-    }
-
-    Write-Verbose $($params.Action)
-    Write-Verbose $($params.PrincipalId)
-    Write-Verbose $($params.RoleDefinitionId)
-    Write-Verbose $($params.DirectoryScopeId)
-    Write-Verbose $($params.Justification)
-    Write-Verbose $($params.ScheduleInfo)
-    
-    #$Process = New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest -BodyParameter $params  
-    $Process = New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest -Action $($params.Action) `
-                -PrincipalId $($params.PrincipalId) `
-                -RoleDefinitionId $($params.RoleDefinitionId) `
-                -DirectoryScopeId $($params.DirectoryScopeId) `
-                -Justification $($params.Justification) `
-                -ScheduleInfo $($params.ScheduleInfo) 
-    if ($RoleDisplayname)
-    {
-        logwrite "INFO: $($Process.Status) - $RoleDisplayname."
-    }
-    else
-    {
-        logwrite "INFO: $($Process.Status) - $RoleDefinitionId."
-    }
-    Stop-Transcript
+    Connect-AzureAD | Out-Null
+    logwrite "INFO: Connected to AzureAD."
 }
 catch
 {
-    if ($RoleDisplayname)
-    {
-        logwrite "ERROR: Failed to activate RoleDisplayName: $RoleDisplayname."
-    }
-    else 
-    {
-        logwrite "ERROR: Failed to activate RoleDefinitionId:$RoleDefinitionId"
-    }
+    logwrite "ERROR: Failed to connect to AzureAD."
     logwrite "ERROR: $_"
     Stop-Transcript
+    exit 2
 }
+#endregion Connect to Azure AD
+
+#region Activate Roles
+if ($RoleDisplayName.StartsWith("Role_-_"))
+{
+    try
+    {
+        logwrite "INFO: Activating RoleDisplayName: $RoleDisplayname."
+        $ScheduleInfo = New-Object Microsoft.Open.MSGraph.Model.AzureADMSPrivilegedSchedule
+        $ScheduleInfo.Type = "Once"
+        $ScheduleInfo.Duration="PT9H"
+        $ScheduleInfo.StartDateTime = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+
+        Open-AzureADMSPrivilegedRoleAssignmentRequest -ProviderId aadgroups `
+            -Schedule $ScheduleInfo `
+            -ResourceId $RoleID `
+            -RoleDefinitionId $RoleDefinitionId `
+            -SubjectId $PrincipalId `
+            -Type UserAdd `
+            -AssignmentState Active `
+            -Reason "Scheduled Task Assignment"
+
+        logwrite "INFO: Successfully activated $RoleDisplayname."
+        Disconnect-AzureAD | Out-Null
+    }
+    catch
+    {
+        logwrite "ERROR: Failed to activate RoleDisplayName: $RoleDisplayname."
+        logwrite "ERROR: $_"
+    }
+}
+else
+{
+    try
+    {
+        logwrite "INFO: Activating RoleDisplayName: $RoleDisplayname."
+
+        $params = @{
+            action = $Action
+            justification = "Scheduled Task Assignment"
+            roleDefinitionId = $RoleDefinitionId
+            directoryScopeId = $DirectoryScopeId
+            principalId = $PrincipalId
+            scheduleInfo = @{
+                startDateTime = Get-Date
+                expiration  = @{
+                    Type = "AfterDuration"
+                    Duration = "PT9H"
+                }
+            }
+        }
+
+        $Process = New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest -Action $($params.Action) `
+            -PrincipalId $($params.PrincipalId) `
+            -RoleDefinitionId $($params.RoleDefinitionId) `
+            -DirectoryScopeId $($params.DirectoryScopeId) `
+            -Justification $($params.Justification) `
+            -ScheduleInfo $($params.ScheduleInfo) 
+
+        logwrite "INFO: $($Process.Status) - $RoleDisplayname."
+    }
+    catch
+    {
+        logwrite "ERROR: Failed to activate RoleDisplayName: $RoleDisplayname."
+        logwrite "ERROR: $_"
+    }
+}
+Stop-Transcript
+logwrite "END: Completed $ScriptName."
 #endregion Activate Roles
