@@ -69,8 +69,8 @@ try
 {
     logwrite "INFO: Creating local credentials."
     New-StoredCredential -Target 'https://portal.azure.com/#view/Microsoft_AAD_IAM/ManagedAppMenuBlade/~/Properties/objectId/<#### INSERT ENT APP OBJECT ID ####>/appId/<#### INSERT ENT APP APPID ####>/preferredSingleSignOnMode~/null/servicePrincipalType/Application' `
-        -UserName #### client ID #### `
-        -Password #### client Secret #### `
+        -UserName <### client ID ###> `
+        -Password <### client Secret ###> `
         -Persist LocalMachine | Out-Null   
     logwrite "INFO: Successully stored credentials in local credential manager."
 }
