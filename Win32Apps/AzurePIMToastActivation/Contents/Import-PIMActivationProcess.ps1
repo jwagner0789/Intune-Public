@@ -33,37 +33,31 @@ logwrite "START: Scheduled task initiated at $ScriptTime from $ScriptPath by $($
 
 #region Modules
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
-if (!(Get-PackageProvider | Where-Object { $_.Name -eq "NuGet" } -ErrorAction SilentlyContinue))
+try 
 {
-    logwrite "INFO: Installing NuGet Package Provider."
-    Install-PackageProvider -Name NuGet -Force -ErrorAction Stop | Out-Null
-    logwrite "INFO: Installed NuGet Package Provider."
-}
-if (!(Get-InstalledModule -Name CredentialManager -ErrorAction SilentlyContinue))
-{
-    try
+    if (!(Get-PackageProvider | Where-Object { $_.Name -eq "NuGet" } -ErrorAction SilentlyContinue))
+    {
+        logwrite "INFO: Installing NuGet Package Provider."
+        Install-PackageProvider -Name NuGet -Force -ErrorAction Stop | Out-Null
+        logwrite "INFO: Installed NuGet Package Provider."
+    }
+    if (!(Get-Module -ListAvailable -Name CredentialManager))
     {
         logwrite "INFO: Installing CredentialManager module."
-        Install-Module -Scope AllUsers CredentialManager -AllowClobber -Force -ErrorAction Stop | Out-Null
-        logwrite "INFO: Installed CredentialManager module."
+        Install-Module CredentialManager -Force -ErrorAction Stop
+        logwrite "INFO: Successfully installed CredentialManager module."
         Import-Module CredentialManager -Force
     }
-    catch
+    else
     {
-        logwrite "ERROR: Failed to install modules."
-        logwrite "ERROR: $_"
-        exit 1
+        Import-Module CredentialManager -Force
     }
 }
-else
+catch
 {
-    Import-Module CredentialManager -Force
-}
-if (!((Get-InstalledModule -Name CredentialManager -ErrorAction SilentlyContinue) -or (Get-module -name CredentialManager)))
-{
-    logwrite "ERROR: Failed to install CredentialManager module."
+    logwrite "ERROR: Failed to install modules."
     logwrite "ERROR: $_"
+    Stop-Transcript
     exit 1
 }
 #endregion Modules
