@@ -123,9 +123,9 @@ else
 if ($Continue)
 {
     #region Authenticate
-    $ClientId = #### INSERT APP REG clientID ####
-    $ClientSecret = #### INSERT APP Reg clientSecret ####
-    $TenantName = #### INSERT Tenant Name ####
+    $ClientId = <### INSERT APP REG clientID ###>
+    $ClientSecret = <### INSERT APP Reg clientSecret ###>
+    $TenantName = <### INSERT Tenant Name ###>
     $Body = @{
         Grant_Type    = "client_credentials"
         Scope         = "https://graph.microsoft.com/.default"
