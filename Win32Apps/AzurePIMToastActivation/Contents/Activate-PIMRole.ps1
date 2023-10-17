@@ -161,7 +161,7 @@ catch
 #region Connect AzureAD
 try
 {
-    $CertThumbprint = Get-ChildItem -Path "Cert:\localmachine\my" | Where-Object {$_.Subject -eq "CN=PIMRoleGroups.sc.ohio.gov"} | Select-Object -ExpandProperty Thumbprint
+    $CertThumbprint = Get-ChildItem -Path "Cert:\localmachine\my" -DnsName <### Insert Cert Name ###> | Select-Object -ExpandProperty Thumbprint
     Connect-AzureAD -TenantId $TenantId -ApplicationId  $AzureADSP -CertificateThumbprint $CertThumbprint | Out-Null
     logwrite "INFO: Connected to AzureAD via certificate."
 }
