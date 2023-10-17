@@ -13,7 +13,7 @@ $FolderPath = "$($env:ProgramData)\PIM_Activation"
 $LogFile = $FolderPath + "\$ScriptName.log"
 $TranscriptFile = "$ScriptName.txt"
 $TrackingRegistryPath = "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Intune\Import-PIMActivationProcess"
-$ScheduledTaskPath = '\#### INSERT FOLDER NAME HERE ####\'
+$ScheduledTaskPath = '\<#### INSERT FOLDER NAME HERE ####>\'
 $ScheduledTaskName = 'Activate-PIMRole'
 $ScheduledTaskXMLFile = @(Resolve-Path ".\Activate-PIMRole.xml" | Select-Object -ExpandProperty path)
 #endregion Constants 
