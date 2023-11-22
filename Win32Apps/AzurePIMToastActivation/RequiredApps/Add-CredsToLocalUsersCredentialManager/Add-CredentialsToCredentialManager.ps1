@@ -36,7 +36,7 @@ else
 }
 #endregion Copy Data to ProgramData
 
-logwrite "START: Scheduled task initiated at $ScriptTime from $ScriptPath by $($ScriptIdentity.Displayname)."
+logwrite "START: $ScriptName at $ScriptTime from $ScriptPath by $($ScriptIdentity.Displayname)."
 
 if (!(Get-InstalledModule -Name CredentialManager -ErrorAction SilentlyContinue))
 {

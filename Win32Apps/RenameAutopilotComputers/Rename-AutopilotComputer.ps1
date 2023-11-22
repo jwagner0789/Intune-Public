@@ -472,6 +472,7 @@ https://graph.microsoft.com/v1.0/deviceManagement/deviceCategories?$filter=conta
                     exit 0
                 }
             #endregion Reboot
+            
         }   
         else
         {

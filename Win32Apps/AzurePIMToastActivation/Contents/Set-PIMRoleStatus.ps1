@@ -72,6 +72,7 @@ catch
 #region Connect to Graph API
 try
 {
+    Import-Module Microsoft.Graph.Authentication -RequiredVersion 1.28.0 | Out-Null
     Connect-MgGraph -Scopes "RoleManagement.ReadWrite.Directory","RoleAssignmentSchedule.ReadWrite.Directory" | Out-Null
     logwrite "INFO: Successfully connected to Microsoft Graph."
 }
@@ -82,24 +83,23 @@ catch
 }
 #endregion Connect to Graph API
 
-#region Connect to Azure AD
-try
-{
-    Connect-AzureAD | Out-Null
-    logwrite "INFO: Connected to AzureAD."
-}
-catch
-{
-    logwrite "ERROR: Failed to connect to AzureAD."
-    logwrite "ERROR: $_"
-    Stop-Transcript
-    exit 2
-}
-#endregion Connect to Azure AD
-
 #region Activate Roles
 if ($RoleDisplayName.StartsWith("Role_-_"))
 {
+    #region Connect to Azure AD
+    try
+    {
+        Connect-AzureAD | Out-Null
+        logwrite "INFO: Connected to AzureAD."
+    }
+    catch
+    {
+        logwrite "ERROR: Failed to connect to AzureAD."
+        logwrite "ERROR: $_"
+        Stop-Transcript
+        exit 2
+    }
+    #endregion Connect to Azure AD
     try
     {
         logwrite "INFO: Activating RoleDisplayName: $RoleDisplayname."
@@ -133,32 +133,31 @@ else
         logwrite "INFO: Activating RoleDisplayName: $RoleDisplayname."
 
         $params = @{
-            action = $Action
-            justification = "Scheduled Task Assignment"
-            roleDefinitionId = $RoleDefinitionId
-            directoryScopeId = $DirectoryScopeId
-            principalId = $PrincipalId
-            scheduleInfo = @{
-                startDateTime = Get-Date
-                expiration  = @{
+            Action = $Action
+            PrincipalId = $PrincipalId
+            RoleDefinitionId = $RoleDefinitionId
+            DirectoryScopeId = $DirectoryScopeId
+            Justification = "Scheduled Task Assignment"
+            ScheduleInfo = @{
+                StartDateTime = Get-Date
+                Expiration  = @{
                     Type = "AfterDuration"
                     Duration = "PT9H"
                 }
             }
         }
-
         $Process = New-MgRoleManagementDirectoryRoleAssignmentScheduleRequest -Action $($params.Action) `
             -PrincipalId $($params.PrincipalId) `
             -RoleDefinitionId $($params.RoleDefinitionId) `
             -DirectoryScopeId $($params.DirectoryScopeId) `
             -Justification $($params.Justification) `
             -ScheduleInfo $($params.ScheduleInfo) 
-
         logwrite "INFO: $($Process.Status) - $RoleDisplayname."
     }
     catch
     {
         logwrite "ERROR: Failed to activate RoleDisplayName: $RoleDisplayname."
+        logwrite "ERROR: $Process"
         logwrite "ERROR: $_"
     }
 }

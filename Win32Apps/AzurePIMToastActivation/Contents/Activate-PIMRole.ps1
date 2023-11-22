@@ -332,7 +332,7 @@ foreach ($role in $RolesToActivate )
             Image     = "$FolderPath\azuread.png"
             AppId     = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
             Group     = 'PIM'
-            Tag       = $($role.RoleDefinition.DisplayName)
+            Tag       = $($Role.RoleDefinition)
             Arguments = "pwrshll://$($Set_PIMRoleStatus) selfActivate $($Role.PrincipalId) $($Role.RoleDefinitionId) $($Role.DirectoryScopeId) $(($Role.DisplayName).Replace(' ','_')) $($Role.ID)"
         }
         logwrite "VERBOSE: $($ToastConfig.Arguments)"
