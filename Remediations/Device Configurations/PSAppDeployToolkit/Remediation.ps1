@@ -44,19 +44,19 @@ function Get-ScriptVersionInfo
 $PSVersion = $PSVersionTable.PSVersion
 Write-Output "Using PowerShell Version $PSVersion."
 
-if (-not(Test-Path "C:\ProgramData\SCONET\PSAppDeployToolkit_v3.9.3"))
+if (-not(Test-Path "C:\ProgramData\PSAppDeployToolkit_v3.9.3"))
 {
     Try
     {
         #Download a zip file which has other required files from the public repo on github
-        Invoke-WebRequest -Uri "https://github.com/PSAppDeployToolkit/PSAppDeployToolkit/releases/download/3.9.3/PSAppDeployToolkit_v3.9.3.zip" -OutFile "C:\ProgramData\SCONET\PSAppDeployToolkit_v3.9.3.zip"
+        Invoke-WebRequest -Uri "https://github.com/PSAppDeployToolkit/PSAppDeployToolkit/releases/download/3.9.3/PSAppDeployToolkit_v3.9.3.zip" -OutFile "C:\ProgramData\PSAppDeployToolkit_v3.9.3.zip"
 
         #Unblock the files especially since they are download from the internet
-        Get-ChildItem "C:\ProgramData\SCONET\PSAppDeployToolkit_v3.9.3.zip" -Recurse -Force | Unblock-File
+        Get-ChildItem "C:\ProgramData\PSAppDeployToolkit_v3.9.3.zip" -Recurse -Force | Unblock-File
 
         #Unzip the files into the current direectory
-        Expand-Archive -LiteralPath "C:\ProgramData\SCONET\PSAppDeployToolkit_v3.9.3.zip" -DestinationPath "C:\ProgramData\SCONET\PSAppDeployToolkit_v3.9.3"
-        Remove-Item -Path "C:\ProgramData\SCONET\PSAppDeployToolkit_v3.9.3.zip" -Force
+        Expand-Archive -LiteralPath "C:\ProgramData\PSAppDeployToolkit_v3.9.3.zip" -DestinationPath "C:\ProgramData\PSAppDeployToolkit_v3.9.3"
+        Remove-Item -Path "C:\ProgramData\PSAppDeployToolkit_v3.9.3.zip" -Force
         Write-Output "PSAppDeployToolkit was successfully deployed."
     }
     catch
@@ -67,7 +67,7 @@ if (-not(Test-Path "C:\ProgramData\SCONET\PSAppDeployToolkit_v3.9.3"))
 }
 try
 {
-    $PSAppDeployToolKit_Path = "C:\ProgramData\SCONET\PSAppDeployToolkit_v3.9.3\Toolkit"
+    $PSAppDeployToolKit_Path = "C:\ProgramData\PSAppDeployToolkit_v3.9.3\Toolkit"
     $Uninstall_HPSupportAssistant = @{
         Name    = "Uninstall-HPSupportAssistant"
         Params  = @{
@@ -75,7 +75,7 @@ try
             Author      = "Justin Wagner"
             Description = "Uninstalls HP Support Assistant"
             Path        = "$PSAppDeployToolKit_Path\Uninstall-HPSupportAssistant.ps1"
-            CompanyName = "Supreme Court of Ohio"
+            CompanyName = "Insert Company Name"
         }
         Content = @'
 
@@ -129,7 +129,7 @@ Try
     {
         $InvocationInfo = $MyInvocation
     }
-    [String]$scriptDirectory = "C:\ProgramData\SCONET\PSAppDeployToolkit_v3.9.3"
+    [String]$scriptDirectory = "C:\ProgramData\PSAppDeployToolkit_v3.9.3"
     Try
     {
         [String]$moduleAppDeployToolkitMain = "$scriptDirectory\Toolkit\AppDeployToolkit\AppDeployToolkitMain.ps1"

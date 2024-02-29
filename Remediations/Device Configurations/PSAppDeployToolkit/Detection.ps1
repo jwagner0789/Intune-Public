@@ -51,7 +51,7 @@ $ToolKitScripts = @(
     $Uninstall_HPSupportAssistant
 )
 
-$PSAppDeployToolKit_Path = "C:\ProgramData\SCONET\PSAppDeployToolkit_v3.9.3"
+$PSAppDeployToolKit_Path = "C:\ProgramData\PSAppDeployToolkit_v3.9.3"
 if (Test-Path $PSAppDeployToolKit_Path)
 {
     Write-Output "Current version of PSAppDeployToolkit is installed."
